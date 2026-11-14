@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#000000">
-<title>Polar Align v7</title>
+<title>Polar Align v8</title>
 <style>
 :root{--fg:#e6e6e6;--bg:#000;--dim:.8}
 body.red{--fg:#ff4a3a}
@@ -116,7 +116,7 @@ function s180(a){a=n360(a);return a>180?a-360:a}
 function f1(v){return(Math.round(v*10)/10).toFixed(1)}
 function $(i){return document.getElementById(i)}
 
-var DEF={lat:41.70,lon:-73.92,dec:-13,magOff:0,magDone:false,noMag:false,zeroB:0,zeroR:0,portNorth:true,theme:"white",dim:.8,sound:"on"};
+var DEF={lat:41.70,lon:-73.92,dec:-13,magOff:0,magDone:false,magCurve:null,noMag:false,zeroB:0,zeroR:0,portNorth:true,theme:"white",dim:.8,sound:"on"};
 try{localStorage.removeItem("polarAlign2")}catch(e){} // old versions' settings are wiped
 var S={};
 try{var sv=JSON.parse(localStorage.getItem("polarAlign6")||"{}")}catch(e){sv={}}
@@ -131,13 +131,15 @@ function look(){
  $("mountBtn").classList.toggle("hidden",S.noMag);
  $("noMagBtn").classList.toggle("wide",S.noMag);$("noMagBtn").classList.toggle("on",S.noMag);
  $("noMagBtn").innerHTML=S.noMag?"NO MAGSAFE ✔<br><span class='sm'>tap to use MagSafe</span>":"NO MAG&shy;SAFE";
- $("mountBtn").textContent=offRef!=null?"STEP 2: SNAPPED ON? TAP":S.magDone?"✔ MAGSAFE FIX SAVED ("+f1(S.magOff)+"°) · REDO":"SET UP MAGSAFE (one time)";
- $("mountBtn").classList.toggle("on",S.magDone&&offRef==null);
+ $("mountBtn").textContent=setup===1?"STEP 1: PHONE IN HAND → NORTH, THEN TAP":setup===2?"STEP 2: ON THE MOUNT? TAP":setup===3?"STEP 3: TURN THE TRIPOD ONE FULL CIRCLE":
+  S.magDone?"✔ MAGSAFE CALIBRATED ("+rate(S.magCurve?S.magCurve.max:S.magOff)+") · REDO":"SET UP MAGSAFE (one time)";
+ $("mountBtn").classList.toggle("on",S.magDone&&setup===0);
 }
-var offRef=null,badMag=null;
-if(S.magDone&&Math.abs(S.magOff)>25){badMag=S.magOff;S.magDone=false;S.magOff=0;save()}
+function rate(o){o=Math.abs(o);return o<5?"GOOD":o<=15?"OKAY":"BAD"}
+var offRef=null,setup=0,badMag=null; // setup 1 = phone in hand pointing north, 2 = phone on the mount
+if(S.magDone&&Math.abs(S.magOff)>30){badMag=S.magOff;S.magDone=false;S.magOff=0;save()}
 look();
-if(badMag!=null)$("mountMsg").textContent="Your saved MagSafe fix was "+Math.round(Math.abs(badMag))+"°, which is too big, so it was cleared. Redo it: phone OFF the mount, tap, snap on, tap.";
+if(badMag!=null)$("mountMsg").textContent="Your saved MagSafe fix was "+Math.round(Math.abs(badMag))+"°, which is too big, so it was cleared. Tap SET UP MAGSAFE to redo it.";
 
 var ac=null;
 function tone(fr,len,twice){
@@ -176,7 +178,12 @@ function onOri(e,abs){
  }
 }
 // magnetic heading of the phone's TOP edge, MagSafe-corrected
-function magFix(){return(!S.noMag&&S.magDone)?S.magOff:0}
+function curveErr(c,H){H*=D;return c.a+c.b*Math.sin(H)+c.c*Math.cos(H)}
+function magFix(){ // no fix while setting it up
+ if(S.noMag||!S.magDone||setup!==0)return 0;
+ var c=S.magCurve;if(!c||raw.mag==null)return S.magOff;
+ var H=raw.mag;for(var i=0;i<4;i++)H=n360(raw.mag-curveErr(c,H)); // find the heading the magnet bent
+ return curveErr(c,H)}
 function magTop(){return raw.mag==null?null:n360(raw.mag-magFix())}
 // magnetic heading of the AIMING end
 function magAim(){var m=magTop();return m==null?null:n360(m+(S.portNorth?180:0))}
@@ -267,7 +274,8 @@ function loop(){
   if(!lockN&&Math.abs(dN)<=2&&ST.head){lockN=true;tone(660,.3)}else if(lockN&&Math.abs(dN)>3)lockN=false;
   var wL=!S.portNorth,goW="SWING WEST "+Math.round(Math.abs(dN))+"°",goE="SWING EAST "+Math.round(Math.abs(dN))+"°";
   $("northCmd").textContent=lockN?"✔ ON NORTH (±2°)":dN>0?(wL?"◀ "+goW:goW+" ▶"):(wL?goE+" ▶":"◀ "+goE);
-  $("northSm").textContent="Aiming "+Math.round(h)+"° true"+(S.noMag?" · plain compass":S.magDone?" · MagSafe fix "+f1(S.magOff)+"°":" · MagSafe not set up");
+  $("northSm").textContent="Aiming "+Math.round(h)+"° true"+(S.noMag?" · plain compass":setup?" · MagSafe setup":S.magDone?" · MagSafe "+f1(Math.abs(S.magOff))+"° "+rate(S.magOff):" · MagSafe not set up");
+  if(setup===1)magMsg(lockN?"✔ The charging port points north. Now tap STEP 1.":"Hold the phone OFF the mount, flat, charging port forward. Turn yourself until the NORTH box shows ✔.");
   $("northP").classList.toggle("locked",lockN);
 
   var dPz=s180(h-P.az),dPa=tilt-P.alt,off=Math.hypot(dPz,dPa);
@@ -287,7 +295,10 @@ function begin(){
  window.addEventListener("deviceorientation",function(e){
   if("ondeviceorientationabsolute" in window&&typeof e.webkitCompassHeading!=="number"){if(e.beta!=null){raw.b=e.beta;raw.g=e.gamma;setTimeout(pushHist,0);got=true}return}
   onOri(e,false)},true);
+ window.addEventListener("devicemotion",onMotion,true);
  $("start").classList.add("hidden");$("main").classList.remove("hidden");
+ if(S.magDone&&!S.noMag)magMsg("MagSafe calibrated ✔ Snap the phone on and go.",6000);
+ else if(!S.noMag){setup=1;offRef=null;look();magMsg("First time: one-time MagSafe setup. Hold the phone OFF the mount, flat, charging port forward. Turn until the NORTH box shows ✔, then tap STEP 1. (No MagSafe? Tap NO MAGSAFE.)",9000)}
  try{navigator.wakeLock&&navigator.wakeLock.request("screen").catch(function(){})}catch(e){}
  getGPS(true);requestAnimationFrame(loop);
  setTimeout(function(){if(!got)$("warn").textContent="No sensor data. Open this page on your phone in Chrome or Safari."},3000);
@@ -311,18 +322,67 @@ function getGPS(quiet){
 }
 $("gpsBtn").onclick=function(){getGPS(false)};
 
-function magMsg(t){$("mountMsg").textContent=t}
+var msgHold=0;
+function magMsg(t,hold){if(!hold&&Date.now()<msgHold)return;$("mountMsg").textContent=t;if(hold)msgHold=Date.now()+hold}
 $("mountBtn").onclick=function(){
+ msgHold=0; // a tap always shows its own instructions
  var m=raw.mag;
  if(m==null){magMsg("No compass reading yet.");return}
- if(S.magDone&&offRef==null){S.magDone=false;save();look();magMsg("Redo: take the phone OFF the mount, point it along the scope, then tap.");return}
- if(offRef==null){offRef=m;look();magMsg("Step 1 saved. Snap the phone onto the MagSafe mount, pointing the SAME way, then tap.");return}
+ if(setup===3)return;
+ if(setup===0){setup=1;offRef=null;S.magCurve=null;sm.hx=sm.hy=null;look();
+  magMsg("Hold the phone OFF the mount, flat, charging port forward. Turn yourself until the NORTH box shows ✔.");return}
+ if(setup===1){
+  if(!lockN){magMsg("Not on north yet. Turn until the NORTH box shows ✔, then tap.",2500);return}
+  offRef=m;setup=2;look();tone(520,.15);
+  magMsg("Step 1 saved. Swing the scope to point the same way as the phone, snap the phone onto the mount, then tap.");return}
  var off=s180(m-offRef);
- if(Math.abs(off)>25){offRef=null;look();magMsg("That came out "+Math.round(Math.abs(off))+"°, too big for a magnet. The phone probably turned between taps. Tap to try again, keeping the charging port pointing the same way both times.");return}
- S.magOff=off;S.magDone=true;offRef=null;save();look();sm.hx=sm.hy=null;tone(660,.2);
- magMsg("Saved for good. You won't need this again unless you change the phone or the mount.");
+ if(Math.abs(off)>30){setup=1;offRef=null;sm.hx=sm.hy=null;look();
+  magMsg("That came out "+Math.round(Math.abs(off))+"°. Did the scope or the phone turn? Let's redo it: phone in hand, back to north.",6000);return}
+S.magOff=off;S.magCurve=null;tone(520,.15);
+ if(!gyroSeen){finishMag("No gyro on this phone, so the spin step is skipped. ");return}
+ setup=3;spin={g:0,t:null,pts:[]};look();
+ magMsg("Step 3: keep the mount flat and SLOWLY turn the whole tripod one full circle, either way (about 30 seconds). 0% done.");
 };
-$("noMagBtn").onclick=function(){S.noMag=!S.noMag;offRef=null;sm.hx=sm.hy=null;save();look();magMsg(S.noMag?"No MagSafe: using the plain compass.":"")};
+function finishMag(note){
+ S.magDone=true;setup=0;offRef=null;spin=null;save();look();sm.hx=sm.hy=null;tone(660,.2);
+ var big=S.magCurve?S.magCurve.max:Math.abs(S.magOff),r=rate(big);
+ magMsg((note||"")+"MagSafe calibrated ✔ "+(S.magCurve?"(biggest bend "+f1(big)+"°, "+r+"). ":"("+f1(big)+"°, "+r+"). ")+
+  (r==="BAD"?"Strong magnet: it's corrected, but readings may wobble. Try a different spot on the mount and redo it.":"Saved for good. You won't need this again unless you change the phone or the mount."),8000);
+}
+// ---- one-time spin: the gyro measures how far the tripod really turned, the compass shows how the magnet bends it
+var spin=null,gyroSeen=false;
+function onMotion(e){
+ var rr=e.rotationRate;if(!rr||rr.alpha==null)return;gyroSeen=true;
+ if(setup!==3||!spin||raw.mag==null)return;
+ var now=performance.now();if(spin.t!=null)spin.g+=rr.alpha*Math.min(.2,(now-spin.t)/1000);spin.t=now;
+ var last=spin.pts[spin.pts.length-1];if(!last||now-last.t>40)spin.pts.push({t:now,g:spin.g,m:raw.mag});
+ var pct=Math.min(100,Math.round(Math.abs(spin.g)/3.6));
+ magMsg("Step 3: keep the mount flat and SLOWLY turn the whole tripod one full circle, either way. "+pct+"% done.");
+ if(Math.abs(spin.g)>=360)fitSpin();
+}
+function fitSpin(){
+ var P=spin.pts;spin=null;
+ if(P.length<40){finishMag("Turned too fast to learn the pattern, so only the north fix was saved. ");return}
+ var M=0;for(var i=1;i<P.length;i++)M+=s180(P[i].m-P[i-1].m); // how far the compass thinks it turned
+ if(Math.abs(M)<200){finishMag("Compass and gyro didn't agree, so only the north fix was saved. ");return}
+ var k=(M*P[P.length-1].g>0)?1:-1,H0=offRef!=null?offRef:P[0].m; // gyro turn direction vs compass direction
+ // least squares: error = a + b·sinH + c·cosH, where H = where the phone really pointed
+ var A=[[0,0,0],[0,0,0],[0,0,0]],y=[0,0,0],rows=[];
+ P.forEach(function(p){var H=n360(H0+k*p.g),e=s180(p.m-H),v=[1,Math.sin(H*D),Math.cos(H*D)];rows.push([v,e]);
+  for(var r=0;r<3;r++){y[r]+=v[r]*e;for(var c=0;c<3;c++)A[r][c]+=v[r]*v[c]}});
+ var x=solve3(A,y);if(!x){finishMag("Couldn't learn the pattern, so only the north fix was saved. ");return}
+ var ss=0,mx=0;rows.forEach(function(rw){var f=x[0]+x[1]*rw[0][1]+x[2]*rw[0][2];ss+=(rw[1]-f)*(rw[1]-f)});
+ for(var h=0;h<360;h+=5)mx=Math.max(mx,Math.abs(x[0]+x[1]*Math.sin(h*D)+x[2]*Math.cos(h*D)));
+ var rms=Math.sqrt(ss/rows.length);
+ if(rms>4){setup=1;offRef=null;spin=null;look();magMsg("The readings were too jumpy (±"+f1(rms)+"°). Let's redo it slower, starting with the phone in hand pointing north.",8000);return}
+ S.magCurve={a:x[0],b:x[1],c:x[2],max:mx};S.magOff=x[0]+x[2]; // value at north
+ finishMag("");
+}
+function solve3(A,y){var m=[A[0].concat(y[0]),A[1].concat(y[1]),A[2].concat(y[2])];
+ for(var i=0;i<3;i++){var p=i;for(var r=i+1;r<3;r++)if(Math.abs(m[r][i])>Math.abs(m[p][i]))p=r;var t=m[i];m[i]=m[p];m[p]=t;
+  if(Math.abs(m[i][i])<1e-9)return null;for(var r=0;r<3;r++)if(r!==i){var f=m[r][i]/m[i][i];for(var c=i;c<4;c++)m[r][c]-=f*m[i][c]}}
+ return[m[0][3]/m[0][0],m[1][3]/m[1][1],m[2][3]/m[2][2]]}
+$("noMagBtn").onclick=function(){S.noMag=!S.noMag;offRef=null;setup=0;sm.hx=sm.hy=null;save();look();magMsg(S.noMag?"No MagSafe: using the plain compass.":"")};
 $("pN").onclick=function(){S.portNorth=true;sm.t=sm.hx=sm.hy=null;hist=[];save();look()};
 $("pS").onclick=function(){S.portNorth=false;sm.t=sm.hx=sm.hy=null;hist=[];save();look()};
 
@@ -339,7 +399,7 @@ $("thW").onclick=function(){S.theme="white";save();look()};$("thR").onclick=func
 $("sOn").onclick=function(){S.sound="on";save();look()};$("sOff").onclick=function(){S.sound="off";save();look()};
 $("dimIn").oninput=function(){S.dim=parseFloat(this.value);save();look()};
 $("clrZero").onclick=function(){S.zeroB=S.zeroR=0;sm.t=sm.r=null;save()};
-$("clrMag").onclick=function(){S.magOff=0;S.magDone=false;offRef=null;save();look();magMsg("Take the phone OFF the mount, point it along the scope, then tap the MagSafe button.")};
+$("clrMag").onclick=function(){S.magOff=0;S.magCurve=null;S.magDone=false;offRef=null;setup=0;save();look();magMsg("Tap SET UP MAGSAFE to do it again.")};
 
 })();
 </script>
