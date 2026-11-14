@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#000000">
-<title>Polar Align v4</title>
+<title>Polar Align v5</title>
 <style>
 :root{--fg:#e6e6e6;--bg:#000;--dim:.8}
 body.red{--fg:#ff4a3a}
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%;background:var(--bg);color:var(--fg);font-family:Verdana,Tahoma,sans-serif;-webkit-user-select:none;user-select:none}
-#app{min-height:100%;display:flex;flex-direction:column;gap:8px;padding:10px;filter:brightness(var(--dim))}
+.scr{min-height:100%;display:flex;flex-direction:column;gap:8px;padding:10px;filter:brightness(var(--dim))}
 button,select,input{font-family:inherit;font-size:18px;font-weight:bold;color:var(--fg);background:var(--bg);border:3px solid var(--fg);border-radius:12px;padding:12px 8px}
 button:active,button.on{background:var(--fg);color:var(--bg)}
 .hidden{display:none!important}
@@ -18,101 +18,144 @@ button:active,button.on{background:var(--fg);color:var(--bg)}
 .panel.locked{background:var(--fg);color:var(--bg);border-style:double;border-width:8px}
 .lbl{font-size:15px;letter-spacing:.15em;font-weight:bold}
 .big{font-size:clamp(28px,8vw,46px);font-weight:bold;line-height:1.1}
-.cmd{font-size:clamp(19px,5.6vw,30px);font-weight:bold}
+.cmd{font-size:clamp(20px,6vw,32px);font-weight:bold}
 .sm{font-size:15px}
-#target{width:100%;max-width:420px;aspect-ratio:1;margin:0 auto;display:block}
-#gauge{width:100%;max-width:200px;aspect-ratio:1;display:block;margin:0 auto}
+.tgt{width:100%;max-width:420px;aspect-ratio:1;margin:0 auto;display:block}
+.gau{width:100%;max-width:220px;aspect-ratio:1;display:block;margin:0 auto}
 .row{display:flex;gap:8px}.row>*{flex:1}
-#start{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:20px;min-height:90vh}
+#start{justify-content:center;align-items:center;text-align:center;gap:18px;min-height:95vh}
 #start h1{margin:0;font-size:32px}
 #start p{font-size:19px;line-height:1.5;margin:0;max-width:26em}
-#startBtn{font-size:30px;padding:22px 56px}
-#mountBtn{width:100%;font-size:clamp(22px,6.5vw,32px);padding:18px 8px;border-width:5px;border-style:dashed}
+.bigBtn{font-size:28px;padding:22px 30px;width:100%;max-width:420px}
+#mountBtn{flex:3;font-size:clamp(20px,6vw,30px);padding:16px 6px;border-width:5px;border-style:dashed}
 #mountBtn.on{border-style:double;border-width:8px}
-#warn:not(:empty){border:3px dashed var(--fg);border-radius:12px;padding:8px;font-weight:bold;text-align:center}
+#noMagBtn{flex:1;font-size:15px;padding:8px 4px}
+#noMagBtn.wide{flex:4;font-size:clamp(18px,5vw,24px);padding:16px 6px}
+.warn:not(:empty){border:3px dashed var(--fg);border-radius:12px;padding:8px;font-weight:bold;text-align:center}
 #settings{position:fixed;inset:0;background:var(--bg);overflow-y:auto;padding:16px;z-index:9;filter:brightness(var(--dim))}
 .f{border:2px solid var(--fg);border-radius:12px;padding:12px;margin-bottom:12px}
 .f .t{font-size:19px;font-weight:bold;margin-bottom:8px}
 .f .h{font-size:15px;line-height:1.45;margin-top:8px}
 input[type=number],input[type=text]{width:8em}
 input[type=range]{width:100%;accent-color:var(--fg)}
+/* Easy mode */
+#eStep{font-size:15px;letter-spacing:.12em;font-weight:bold}
+#eTitle{font-size:clamp(28px,8vw,40px);font-weight:bold;margin:4px 0}
+#eText{font-size:clamp(19px,5.4vw,24px);line-height:1.5}
+#eAct{width:100%;font-size:clamp(22px,6.5vw,30px);padding:20px 8px;border-width:5px}
+#eAct2{width:100%;font-size:clamp(22px,6.5vw,30px);padding:20px 8px;border-width:5px}
+#eNums{font-size:clamp(22px,6vw,30px);font-weight:bold;text-align:center}
+#eCmd{text-align:center;font-size:clamp(26px,8vw,40px);font-weight:bold;padding:10px;border:3px solid var(--fg);border-radius:14px}
+#eCmd.locked{background:var(--fg);color:var(--bg);border-style:double;border-width:8px}
 </style>
 </head>
 <body>
-<div id="app">
- <div id="start">
-  <h1>POLAR ALIGN</h1>
-  <p>Phone screen-up on the MagSafe mount.<br>The CHARGING PORT points where the scope points (north).<br>Stand at the charging-port end and read the screen normally.</p>
-  <button id="startBtn">START</button>
-  <p id="startMsg" class="sm"></p>
- </div>
 
- <div id="main" class="hidden" style="display:flex;flex-direction:column;gap:8px">
+<!-- START -->
+<div id="start" class="scr">
+ <h1>POLAR ALIGN</h1>
+ <p>Phone screen-up on the scope mount.<br>The CHARGING PORT points where the scope points.</p>
+ <button id="easyBtn" class="bigBtn">EASY MODE<br><span class="sm">step by step, with voice</span></button>
+ <button id="fullBtn" class="bigBtn">FULL SCREEN<br><span class="sm">everything at once</span></button>
+ <p id="startMsg" class="sm"></p>
+</div>
+
+<!-- FULL SCREEN -->
+<div id="main" class="scr hidden">
+ <div class="row">
   <button id="mountBtn">MAGSAFE: OFF MOUNT</button>
-  <div id="mountMsg" class="sm" style="text-align:center">Phone OFF the mount: tap the button above. Then snap it on, aimed the same way, and tap again.</div>
-  <canvas id="target" width="600" height="600"></canvas>
-  <div class="row">
-   <div id="northP" class="panel"><div class="lbl">NORTH</div><div id="northCmd" class="cmd">WAIT…</div><div id="northSm" class="sm">&nbsp;</div></div>
-   <div id="polP" class="panel"><div class="lbl">POLARIS</div><div id="polCmd" class="cmd">WAIT…</div><div id="polSm" class="sm">&nbsp;</div></div>
-  </div>
-  <div id="angP" class="panel">
-   <div class="lbl">ANGLE (INCLINATION)</div>
-   <div class="row" style="align-items:center">
-    <div><canvas id="gauge" width="300" height="300"></canvas></div>
-    <div>
-     <div class="sm">SCOPE</div><div id="angNow" class="big">--</div>
-     <div class="sm" style="margin-top:6px">TARGET</div><div id="angTgt" class="big">--</div>
-    </div>
+  <button id="noMagBtn">NO MAG&shy;SAFE</button>
+ </div>
+ <div id="mountMsg" class="sm" style="text-align:center"></div>
+ <canvas id="target" class="tgt" width="600" height="600"></canvas>
+ <div class="row">
+  <div id="aimP" class="panel"><div class="lbl">POLARIS</div><div id="aimCmd" class="cmd">WAIT…</div><div id="aimSm" class="sm">&nbsp;</div></div>
+  <div id="northP" class="panel"><div class="lbl">NORTH</div><div id="northCmd" class="cmd">WAIT…</div><div id="northSm" class="sm">&nbsp;</div></div>
+ </div>
+ <div id="angP" class="panel">
+  <div class="lbl">ANGLE</div>
+  <div class="row" style="align-items:center">
+   <div><canvas id="gauge" class="gau" width="300" height="300"></canvas></div>
+   <div>
+    <div class="sm">SCOPE</div><div id="angNow" class="big">--</div>
+    <div class="sm" style="margin-top:6px">TARGET</div><div id="angTgt" class="big">--</div>
    </div>
-   <div id="angCmd" class="cmd">WAIT…</div>
-   <div id="sideSm" class="sm">&nbsp;</div>
   </div>
-  <div id="warn"></div>
-  <div class="row">
-   <button id="zeroBtn">ZERO</button>
-   <button id="setBtn">SETTINGS</button>
-  </div>
+  <div id="angCmd" class="cmd">WAIT…</div>
+  <div id="sideSm" class="sm">&nbsp;</div>
+ </div>
+ <div id="warn" class="warn"></div>
+ <div class="row">
+  <button id="zeroBtn">ZERO</button>
+  <button id="toEasy">EASY MODE</button>
+  <button id="setBtn">SETTINGS</button>
  </div>
 </div>
 
+<!-- EASY MODE -->
+<div id="easy" class="scr hidden">
+ <div class="row" style="align-items:center">
+  <div id="eStep">STEP 1</div>
+  <button id="eVoice" style="flex:0 0 auto;font-size:15px;padding:8px 12px">VOICE ON</button>
+ </div>
+ <div id="eTitle"></div>
+ <div id="eText"></div>
+ <canvas id="eTarget" class="tgt hidden" width="600" height="600"></canvas>
+ <canvas id="eGauge" class="gau hidden" width="300" height="300" style="max-width:300px"></canvas>
+ <div id="eNums" class="hidden"></div>
+ <div id="eCmd" class="hidden"></div>
+ <div id="eWarn" class="warn"></div>
+ <button id="eAct" class="hidden"></button>
+ <button id="eAct2" class="hidden"></button>
+ <div class="row" style="margin-top:auto">
+  <button id="eBack">◀ BACK</button>
+  <button id="eSkip">SKIP ▶</button>
+  <button id="eExit">FULL SCREEN</button>
+ </div>
+</div>
+
+<!-- SETTINGS -->
 <div id="settings" class="hidden">
  <h2>SETTINGS</h2>
  <div class="f"><div class="t">Location (GPS)</div>
   Lat <input id="latIn" type="number" step="0.01"> Lon <input id="lonIn" type="number" step="0.01">
   <div style="margin-top:8px"><button id="gpsBtn">USE GPS</button></div>
   <div id="gpsMsg" class="h"></div>
-  <div class="h">Your latitude is the target angle. West longitudes are negative. Poughkeepsie ≈ 41.70, -73.92.</div></div>
+  <div class="h">Your latitude is the target angle. Poughkeepsie ≈ 41.70, -73.92.</div></div>
+
+ <div class="f"><div class="t">Mount</div>
+  <div class="row"><button id="useMag">MAGSAFE</button><button id="noMag">NO MAGSAFE</button></div>
+  <div class="h">No MagSafe skips the magnet fix and uses the plain compass.</div></div>
 
  <div class="f"><div class="t">Which end of the phone aims?</div>
-  <div class="row"><button id="aimPort">CHARGING PORT</button><button id="aimCam">CAMERA END</button></div>
-  <div class="h">The end that points north, the same way as the scope.</div></div>
+  <div class="row"><button id="aimPort">CHARGING PORT</button><button id="aimCam">CAMERA END</button></div></div>
 
  <div class="f"><div class="t">Directions</div>
   <div class="h" style="margin-top:0">Angle needle</div>
   <div class="row"><button id="tiltN">NORMAL</button><button id="tiltR">REVERSED</button></div>
-  <div class="h">Bullseye left / right</div>
-  <div class="row"><button id="lrW">WEST ON LEFT</button><button id="lrE">EAST ON LEFT</button></div>
-  <div class="h">If the needle or the scope marker moves the wrong way, flip it here.</div></div>
+  <div class="h">Left / right arrows</div>
+  <div class="row"><button id="lrW">NORMAL</button><button id="lrE">SWAPPED</button></div>
+  <div class="h">If a needle, marker or arrow goes the wrong way, flip it here.</div></div>
 
  <div class="f"><div class="t">True-north correction</div>
   <input id="decIn" type="number" step="0.1"> ° (negative = West)
   <div style="margin-top:8px"><button id="polSetBtn">SET FROM POLARIS</button></div>
-  <div class="h">Aim the scope (and the phone's aiming end) at Polaris, then tap. It works out the correction and saves it. Poughkeepsie is about -13.</div></div>
+  <div class="h">Aim the scope at Polaris, then tap. Poughkeepsie is about -13.</div></div>
 
  <div class="f"><div class="t">Saved phone + mount</div>
   <select id="profSel" style="width:100%"></select>
   <div class="row" style="margin-top:8px"><button id="profLoad">LOAD</button><button id="profDel">DELETE</button></div>
   <div style="margin-top:8px"><input id="profName" type="text" placeholder="Name" style="width:100%"></div>
-  <div style="margin-top:8px"><button id="profSave" style="width:100%">SAVE CURRENT</button></div>
-  <div class="h">Saves the zero, MagSafe offset, north correction and aiming end.</div></div>
+  <div style="margin-top:8px"><button id="profSave" style="width:100%">SAVE CURRENT</button></div></div>
 
  <div class="f"><div class="t">Screen</div>
   <div class="row"><button id="thW">DIM WHITE</button><button id="thR">DIM RED</button></div>
   <input id="dimIn" type="range" min=".25" max="1" step=".05" style="margin-top:10px"></div>
 
- <div class="f"><div class="t">Sound</div>
-  <div class="row"><button id="sOn">ON</button><button id="sOff">OFF</button></div>
-  <div class="h">High beep = angle. Middle tone = north. Low double tone = Polaris.</div></div>
+ <div class="f"><div class="t">Sound and voice</div>
+  <div class="row"><button id="sOn">BEEPS ON</button><button id="sOff">BEEPS OFF</button></div>
+  <div class="row" style="margin-top:8px"><button id="vOn">VOICE ON</button><button id="vOff">VOICE OFF</button></div>
+  <div class="h">High beep = angle. Middle tone = north. Low double tone = Polaris. Beeps only come once the scope is held steady.</div></div>
 
  <div class="f"><div class="t">Reset</div>
   <div class="row"><button id="clrZero">CLEAR ZERO</button><button id="clrMag">CLEAR MAGSAFE</button></div></div>
@@ -128,228 +171,342 @@ function n360(a){a%=360;return a<0?a+360:a}
 function s180(a){a=n360(a);return a>180?a-360:a}
 function f1(v){return(Math.round(v*10)/10).toFixed(1)}
 function $(i){return document.getElementById(i)}
+function show(id,on){$(id).classList.toggle("hidden",!on)}
 
-var DEF={lat:41.70,lon:-73.92,dec:-13,magOff:0,zeroB:0,zeroR:0,mounted:false,aimPort:true,flipTilt:true,flipLR:true,theme:"white",dim:.8,sound:"on",profiles:{}};
+// ---------- settings ----------
+var DEF={lat:41.70,lon:-73.92,dec:-13,magOff:0,zeroB:0,zeroR:0,mounted:false,noMag:false,aimPort:true,flipTilt:true,flipLR:true,
+ theme:"white",dim:.8,sound:"on",voice:true,lastMode:"easy",profiles:{}};
 var S={};
 try{var sv=JSON.parse(localStorage.getItem("polarAlign2")||"{}")}catch(e){sv={}}
 for(var k in DEF)S[k]=(sv&&k in sv)?sv[k]:DEF[k];
 function save(){try{localStorage.setItem("polarAlign2",JSON.stringify(S))}catch(e){}}
+function tog(a,b,cond){$(a).classList.toggle("on",!!cond);$(b).classList.toggle("on",!cond)}
 function look(){
  document.body.classList.toggle("red",S.theme==="red");
  document.documentElement.style.setProperty("--dim",S.dim);
- $("thW").classList.toggle("on",S.theme==="white");$("thR").classList.toggle("on",S.theme==="red");
- $("sOn").classList.toggle("on",S.sound==="on");$("sOff").classList.toggle("on",S.sound!=="on");
- $("aimPort").classList.toggle("on",!!S.aimPort);$("aimCam").classList.toggle("on",!S.aimPort);
- $("mountBtn").textContent=S.mounted?"✔ MAGSAFE: ON MOUNT":"MAGSAFE: OFF MOUNT";
- $("tiltN").classList.toggle("on",!S.flipTilt);$("tiltR").classList.toggle("on",!!S.flipTilt);
- $("lrW").classList.toggle("on",!!S.flipLR);$("lrE").classList.toggle("on",!S.flipLR);
- $("mountBtn").classList.toggle("on",S.mounted);
+ tog("thW","thR",S.theme==="white");tog("sOn","sOff",S.sound==="on");tog("vOn","vOff",S.voice);
+ tog("aimPort","aimCam",S.aimPort);tog("tiltN","tiltR",!S.flipTilt);tog("lrW","lrE",S.flipLR);tog("useMag","noMag",!S.noMag);
+ $("eVoice").textContent=S.voice?"VOICE ON":"VOICE OFF";$("eVoice").classList.toggle("on",S.voice);
+ show("mountBtn",!S.noMag);
+ $("noMagBtn").classList.toggle("wide",S.noMag);$("noMagBtn").classList.toggle("on",S.noMag);
+ $("noMagBtn").innerHTML=S.noMag?"NO MAGSAFE ✔<br><span class='sm'>tap to use MagSafe</span>":"NO MAG&shy;SAFE";
+ if(!S.noMag){$("mountBtn").textContent=offRef!=null?"STEP 2: ON MOUNT? TAP":S.mounted?"✔ MAGSAFE: ON MOUNT":"MAGSAFE: OFF MOUNT";
+  $("mountBtn").classList.toggle("on",S.mounted&&offRef==null)}
+ // first start button = last mode used
+ var st=$("start");if(S.lastMode==="full")st.insertBefore($("fullBtn"),$("easyBtn"));else st.insertBefore($("easyBtn"),$("fullBtn"));
 }
-look();
 
+// ---------- sound + voice ----------
 var ac=null;
 function tone(fr,len,twice){
  if(S.sound!=="on")return;
  try{navigator.vibrate&&navigator.vibrate(twice?[150,100,150]:150)}catch(e){}
  if(!ac)return;
- function one(t0){
-  var o=ac.createOscillator(),g=ac.createGain();o.type="sine";o.frequency.value=fr;
+ function one(t0){var o=ac.createOscillator(),g=ac.createGain();o.type="sine";o.frequency.value=fr;
   g.gain.setValueAtTime(.0001,t0);g.gain.exponentialRampToValueAtTime(.4,t0+.02);
-  g.gain.exponentialRampToValueAtTime(.0001,t0+len);o.connect(g);g.connect(ac.destination);
-  o.start(t0);o.stop(t0+len+.05);
- }
+  g.gain.exponentialRampToValueAtTime(.0001,t0+len);o.connect(g);g.connect(ac.destination);o.start(t0);o.stop(t0+len+.05)}
  try{one(ac.currentTime);if(twice)one(ac.currentTime+len+.12)}catch(e){}
 }
+var lastSay="",lastSayT=0;
+function say(t,force){
+ if(!S.voice||!window.speechSynthesis||mode!=="easy")return;
+ var now=Date.now();
+ if(!force&&t===lastSay&&now-lastSayT<7000)return;
+ if(!force&&now-lastSayT<2500)return;
+ lastSay=t;lastSayT=now;
+ try{speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(t);u.rate=1;speechSynthesis.speak(u)}catch(e){}
+}
 
-// Polaris, current-epoch position (good for the next few years)
-var POL_RA=45.0, POL_DEC=89.36;
+// ---------- sky ----------
+var POL_RA=45.0,POL_DEC=89.36; // Polaris, current epoch
 function polaris(){
- var jd=Date.now()/86400000+2440587.5;
- var gmst=280.46061837+360.98564736629*(jd-2451545);
+ var jd=Date.now()/86400000+2440587.5,gmst=280.46061837+360.98564736629*(jd-2451545);
  var ha=n360(gmst+S.lon-POL_RA)*D,de=POL_DEC*D,la=S.lat*D;
- var sa=Math.sin(de)*Math.sin(la)+Math.cos(de)*Math.cos(la)*Math.cos(ha);
- var alt=Math.asin(sa)*R;
+ var alt=Math.asin(Math.sin(de)*Math.sin(la)+Math.cos(de)*Math.cos(la)*Math.cos(ha))*R;
  var y=-Math.cos(de)*Math.sin(ha),x=Math.sin(de)*Math.cos(la)-Math.cos(de)*Math.cos(ha)*Math.sin(la);
  return{alt:alt,az:n360(Math.atan2(y,x)*R)};
 }
 
-var raw={b:null,g:null,mag:null,acc:null},got=false;
+// ---------- sensors ----------
+var raw={b:null,g:null,mag:null,acc:null},got=false,hist=[];
 function onOri(e,abs){
  if(e.beta==null)return;got=true;raw.b=e.beta;raw.g=e.gamma;
- if(typeof e.webkitCompassHeading==="number"&&!isNaN(e.webkitCompassHeading)){
-  raw.mag=e.webkitCompassHeading;raw.acc=e.webkitCompassAccuracy;
- }else if((abs||e.absolute===true)&&e.alpha!=null){
-  var a=e.alpha*D,b=e.beta*D;
-  raw.mag=n360(Math.atan2(-Math.sin(a)*Math.cos(b),Math.cos(a)*Math.cos(b))*R);
- }
+ if(typeof e.webkitCompassHeading==="number"&&!isNaN(e.webkitCompassHeading)){raw.mag=e.webkitCompassHeading;raw.acc=e.webkitCompassAccuracy}
+ else if((abs||e.absolute===true)&&e.alpha!=null){var a=e.alpha*D,b=e.beta*D;raw.mag=n360(Math.atan2(-Math.sin(a)*Math.cos(b),Math.cos(a)*Math.cos(b))*R)}
 }
-// magnetic heading of the phone's TOP edge, MagSafe-corrected
-function magTop(){return raw.mag==null?null:n360(raw.mag-(S.mounted?S.magOff:0))}
-// magnetic heading of the AIMING end
+function useMagFix(){return !S.noMag&&S.mounted}
+function magTop(){return raw.mag==null?null:n360(raw.mag-(useMagFix()?S.magOff:0))}
 function magAim(){var m=magTop();return m==null?null:n360(m+(S.aimPort?180:0))}
 function trueAim(){var m=magAim();return m==null?null:n360(m+S.dec)}
-// how far the aiming end is raised above flat
 function tiltAim(){var b=raw.b-S.zeroB,t=S.aimPort?-b:b;return S.flipTilt?-t:t}
 function rollOf(){return Math.asin(Math.max(-1,Math.min(1,-Math.cos(raw.b*D)*Math.sin(raw.g*D))))*R}
-
 var sm={t:null,r:null,hx:null,hy:null},K=.15;
 function smo(k,v){sm[k]=sm[k]==null?v:sm[k]+K*(v-sm[k]);return sm[k]}
-function fgCol(){return getComputedStyle(document.body).getPropertyValue("--fg").trim()||"#e6e6e6"}
+function resetSm(){sm.t=sm.r=sm.hx=sm.hy=null;hist=[]}
 
-// ---- Bullseye: centre = true celestial pole (true north, tilted to your latitude).
-// Left/right match where you stand: at the charging-port end, facing south, east is on your left.
-var cv=$("target"),cx=cv.getContext("2d");
-function star(x,y,big){cx.save();cx.translate(x,y);cx.beginPath();
- for(var i=0;i<10;i++){var r=i%2?(big?7:5):(big?18:13),a=i*Math.PI/5-Math.PI/2;cx.lineTo(r*Math.cos(a),r*Math.sin(a))}
- cx.closePath();cx.fill();cx.restore()}
-function draw(dN,dUp,P,allOk){
- var W=600,C=300,sc=24,col=fgCol();
- cx.clearRect(0,0,W,W);cx.strokeStyle=col;cx.fillStyle=col;cx.lineWidth=3;
- [1,3,6,12].forEach(function(r){cx.beginPath();cx.arc(C,C,r*sc,0,7);cx.stroke()});
- cx.lineWidth=1;cx.beginPath();cx.moveTo(C,0);cx.lineTo(C,W);cx.moveTo(0,C);cx.lineTo(W,C);cx.stroke();
- cx.font="bold 24px Verdana";cx.textAlign="center";
- cx.fillText("▲ NORTH",C,28);cx.fillText("▼ SOUTH",C,W-10);
- var LR=S.flipLR?1:-1; // +1: west on the left, east on the right
- cx.textAlign="left";cx.fillText(S.flipLR?"◀ W":"◀ E",8,C-12);cx.textAlign="right";cx.fillText(S.flipLR?"E ▶":"W ▶",W-8,C-12);cx.textAlign="center";
- // centre target = true north pole
- cx.lineWidth=4;cx.beginPath();cx.arc(C,C,10,0,7);cx.stroke();
- cx.font="bold 20px Verdana";cx.fillText("N",C+28,C+30);
- // Polaris, relative to the pole (east = left)
- if(P){var px=C+LR*s180(P.az)*sc,py=C-(P.alt-S.lat)*sc;star(px,py,false);cx.fillText("Polaris",px,py-20)}
- if(dN==null)return;
- var x=C+LR*dN*sc,y=C-dUp*sc,edge=false,dx=x-C,dy=y-C,dist=Math.hypot(dx,dy),max=C-24;
+// "hold steady": readings must stop jumping before anything locks or beeps
+function steadyCheck(tilt,h){
+ var now=performance.now();hist.push({t:now,a:tilt,h:h});
+ while(hist.length&&now-hist[0].t>900)hist.shift();
+ if(hist.length<8||now-hist[0].t<600)return{tilt:false,head:false};
+ var amin=1e9,amax=-1e9,hmin=1e9,hmax=-1e9,ref=hist[0].h;
+ hist.forEach(function(p){amin=Math.min(amin,p.a);amax=Math.max(amax,p.a);
+  if(p.h!=null&&ref!=null){var d=s180(p.h-ref);hmin=Math.min(hmin,d);hmax=Math.max(hmax,d)}});
+ return{tilt:amax-amin<.35,head:ref==null?false:(hmax-hmin<1.2)};
+}
+function rawStill(){ // for ZERO: phone itself not moving
+ var now=performance.now(),a=hist.filter(function(p){return now-p.t<900});
+ if(a.length<8)return false;var mn=1e9,mx=-1e9;a.forEach(function(p){mn=Math.min(mn,p.a);mx=Math.max(mx,p.a)});return mx-mn<.35;
+}
+
+// ---------- drawing ----------
+function fgCol(el){return getComputedStyle(el).color||"#e6e6e6"}
+function star(c,x,y,r1,r2){c.save();c.translate(x,y);c.beginPath();
+ for(var i=0;i<10;i++){var r=i%2?r2:r1,a=i*Math.PI/5-Math.PI/2;c.lineTo(r*Math.cos(a),r*Math.sin(a))}c.closePath();c.fill();c.restore()}
+function arrowLine(c,x1,y1,x2,y2){var a=Math.atan2(y2-y1,x2-x1),L=Math.hypot(x2-x1,y2-y1);if(L<40)return;
+ var sx=x1+Math.cos(a)*40,sy=y1+Math.sin(a)*40,ex=x2-Math.cos(a)*30,ey=y2-Math.sin(a)*30;
+ c.lineWidth=7;c.beginPath();c.moveTo(sx,sy);c.lineTo(ex,ey);c.stroke();
+ c.beginPath();c.moveTo(ex+Math.cos(a)*22,ey+Math.sin(a)*22);c.lineTo(ex+Math.cos(a+2.5)*26,ey+Math.sin(a+2.5)*26);c.lineTo(ex+Math.cos(a-2.5)*26,ey+Math.sin(a-2.5)*26);c.closePath();c.fill()}
+// Bullseye: Polaris in the centre. N = true north pole (with MagSafe fix). + = where the scope aims.
+function drawTarget(cv,ST){
+ var c=cv.getContext("2d"),W=600,C=300,sc=24,col=fgCol(cv),LR=S.flipLR?1:-1;
+ c.clearRect(0,0,W,W);c.strokeStyle=col;c.fillStyle=col;c.lineWidth=3;
+ [1,3,6,12].forEach(function(r){c.beginPath();c.arc(C,C,r*sc,0,7);c.stroke()});
+ c.lineWidth=1;c.beginPath();c.moveTo(C,0);c.lineTo(C,W);c.moveTo(0,C);c.lineTo(W,C);c.stroke();
+ c.textAlign="center";
+ star(c,C,C,22,9);c.font="bold 22px Verdana";c.fillText("POLARIS",C,C-34);
+ var P=ST.P,nx=C+LR*(-s180(P.az))*sc,ny=C-(S.lat-P.alt)*sc;
+ c.lineWidth=3;c.beginPath();c.arc(nx,ny,9,0,7);c.stroke();c.font="bold 20px Verdana";c.fillText("N",nx+24,ny+28);
+ if(ST.dH==null){c.font="bold 22px Verdana";c.fillText("waiting for compass…",C,W-30);return}
+ var x=C+LR*ST.dH*sc,y=C-(ST.tilt-P.alt)*sc,edge=false,dx=x-C,dy=y-C,dist=Math.hypot(dx,dy),max=C-26;
  if(dist>max){x=C+dx/dist*max;y=C+dy/dist*max;edge=true}
- cx.lineWidth=5;cx.beginPath();cx.arc(x,y,allOk?30:20,0,7);cx.stroke();
- cx.beginPath();cx.moveTo(x-36,y);cx.lineTo(x+36,y);cx.moveTo(x,y-36);cx.lineTo(x,y+36);cx.stroke();
- cx.font="bold 18px Verdana";cx.fillText(edge?"SCOPE (FAR)":"SCOPE",x,y+56);
- if(allOk){cx.font="bold 40px Verdana";cx.fillText("✔ ALIGNED",C,C+120)}
+ if(!(ST.lockP&&ST.lockA))arrowLine(c,x,y,C,C);
+ c.lineWidth=6;c.beginPath();c.arc(x,y,ST.lockP&&ST.lockA?32:20,0,7);c.stroke();
+ c.beginPath();c.moveTo(x-38,y);c.lineTo(x+38,y);c.moveTo(x,y-38);c.lineTo(x,y+38);c.stroke();
+ c.font="bold 18px Verdana";c.fillText(edge?"SCOPE (FAR)":"SCOPE",x,y+60);
+ if(ST.lockP&&ST.lockA){c.font="bold 42px Verdana";c.fillText("✔ ALIGNED",C,C+130)}
+}
+// Angle gauge: dashed = target, solid = scope
+function drawGauge(cv,tilt,tgt){
+ var c=cv.getContext("2d"),ox=30,oy=270,r=230,col=fgCol(cv);
+ c.clearRect(0,0,300,300);c.strokeStyle=col;c.fillStyle=col;
+ c.lineWidth=3;c.beginPath();c.moveTo(ox,oy);c.lineTo(ox+r,oy);c.arc(ox,oy,r,0,-Math.PI/2,true);c.closePath();c.stroke();
+ c.font="bold 18px Verdana";c.textAlign="center";
+ for(var d=0;d<=90;d+=10){var a=-d*D,cs=Math.cos(a),sn=Math.sin(a);c.lineWidth=d%30?2:4;
+  c.beginPath();c.moveTo(ox+(r-14)*cs,oy+(r-14)*sn);c.lineTo(ox+r*cs,oy+r*sn);c.stroke();
+  if(d%30===0)c.fillText(d,ox+(r+18)*cs,oy+(r+18)*sn+6)}
+ function ray(deg,dash,w,len){var a=-Math.max(-5,Math.min(95,deg))*D;c.setLineDash(dash);c.lineWidth=w;
+  c.beginPath();c.moveTo(ox,oy);c.lineTo(ox+len*Math.cos(a),oy+len*Math.sin(a));c.stroke();c.setLineDash([])}
+ ray(tgt,[14,10],5,r);if(tilt!=null){ray(tilt,[],8,r-30);c.beginPath();c.arc(ox,oy,10,0,7);c.fill()}
 }
 
-// ---- Inclination gauge: quarter circle 0-90°. Dashed line = target, solid line = scope.
-var gv=$("gauge"),gx=gv.getContext("2d");
-function gauge(tilt,tgt){
- var W=300,ox=30,oy=270,r=230,col=getComputedStyle(gv).color||fgCol(); // follows the panel, so it stays visible when LOCKED
- gx.clearRect(0,0,W,W);gx.strokeStyle=col;gx.fillStyle=col;
- gx.lineWidth=3;gx.beginPath();gx.moveTo(ox,oy);gx.lineTo(ox+r,oy);gx.arc(ox,oy,r,0,-Math.PI/2,true);gx.closePath();gx.stroke();
- gx.font="bold 18px Verdana";gx.textAlign="center";
- for(var d=0;d<=90;d+=10){var a=-d*D,c=Math.cos(a),s=Math.sin(a);
-  gx.lineWidth=d%30?2:4;gx.beginPath();gx.moveTo(ox+(r-14)*c,oy+(r-14)*s);gx.lineTo(ox+r*c,oy+r*s);gx.stroke();
-  if(d%30===0)gx.fillText(d,ox+(r+18)*c,oy+(r+18)*s+6)}
- function ray(deg,dash,w,len){var a=-Math.max(-5,Math.min(95,deg))*D;gx.setLineDash(dash);gx.lineWidth=w;
-  gx.beginPath();gx.moveTo(ox,oy);gx.lineTo(ox+len*Math.cos(a),oy+len*Math.sin(a));gx.stroke();gx.setLineDash([])}
- ray(tgt,[14,10],5,r);
- if(tilt!=null){ray(tilt,[],8,r-30);gx.beginPath();gx.arc(ox,oy,10,0,7);gx.fill()}
+// ---------- plain-words directions ----------
+function angleWords(ST){return ST.lockA?"✔ ANGLE LOCKED":ST.dAlt<0?"▲ TILT UP "+f1(-ST.dAlt)+"°":"▼ TILT DOWN "+f1(ST.dAlt)+"°"}
+function angleSpeak(ST){return ST.lockA?"Angle locked":ST.dAlt<0?"Tilt up":"Tilt down"}
+function sideOf(d){var LR=S.flipLR?1:-1;return LR*d} // >0: marker sits right of target
+function turnWords(d,lock,okText){if(d==null)return got?"NO COMPASS":"WAIT…";if(lock)return okText;
+ var s=sideOf(d),n=Math.round(Math.abs(d));return s>0?"◀ TURN LEFT "+n+"°":"TURN RIGHT "+n+"° ▶"}
+function turnSpeak(d,lock,ok){if(d==null)return"";if(lock)return ok;return sideOf(d)>0?"Turn left":"Turn right"}
+
+// ---------- state + locks ----------
+var lockA=false,lockN=false,lockP=false,sinceA=0,sinceP=0;
+function compute(){
+ var P=polaris(),tilt=smo("t",tiltAim()),side=smo("r",rollOf()-S.zeroR),dAlt=tilt-S.lat;
+ var th=trueAim(),h=null,dH=null,dN=null;
+ if(th!=null){var hx=smo("hx",Math.sin(th*D)),hy=smo("hy",Math.cos(th*D));h=n360(Math.atan2(hx,hy)*R);dH=s180(h-P.az);dN=s180(h)}
+ var st=steadyCheck(tilt,h),now=performance.now();
+ if(!lockA&&Math.abs(dAlt)<=.5&&st.tilt){lockA=true;tone(880,.25)}else if(lockA&&Math.abs(dAlt)>.7)lockA=false;
+ if(dN!=null){if(!lockN&&Math.abs(dN)<=1.5&&st.head){lockN=true;tone(660,.3)}else if(lockN&&Math.abs(dN)>2.5)lockN=false;}else lockN=false;
+ if(dH!=null){if(!lockP&&Math.abs(dH)<=1.5&&st.head){lockP=true;tone(523,.3,true)}else if(lockP&&Math.abs(dH)>2.5)lockP=false;}else lockP=false;
+ sinceA=lockA?(sinceA||now):0;sinceP=lockP?(sinceP||now):0;
+ return{P:P,tilt:tilt,side:side,dAlt:dAlt,h:h,dH:dH,dN:dN,lockA:lockA,lockN:lockN,lockP:lockP,steady:st,
+  heldA:sinceA?now-sinceA:0,heldP:sinceP?now-sinceP:0};
+}
+function warnText(){return(raw.acc!=null&&(raw.acc<0||raw.acc>20))?"Compass weak: wave the phone in a slow figure-8 away from metal.":""}
+function sideText(s){return Math.abs(s)<1?"Sides level":s>0?"Right side high "+f1(s)+"°":"Left side high "+f1(-s)+"°"}
+
+function renderFull(ST){
+ $("angNow").textContent=f1(ST.tilt)+"°";$("angTgt").textContent=f1(S.lat)+"°";
+ $("angCmd").textContent=angleWords(ST);$("angP").classList.toggle("locked",ST.lockA);
+ $("sideSm").textContent=sideText(ST.side);
+ drawGauge($("gauge"),ST.tilt,S.lat);
+ $("aimCmd").textContent=turnWords(ST.dH,ST.lockP,"✔ ON POLARIS");$("aimP").classList.toggle("locked",ST.lockP);
+ $("aimSm").textContent="Polaris is "+f1(ST.P.alt)+"° up";
+ $("northCmd").textContent=turnWords(ST.dN,ST.lockN,"✔ ON NORTH");$("northP").classList.toggle("locked",ST.lockN);
+ $("northSm").textContent=ST.h==null?"Angle still works.":(S.noMag?"Plain compass":useMagFix()?"MagSafe fix "+f1(S.magOff)+"°":"MagSafe fix OFF");
+ drawTarget($("target"),ST);
+ var w=warnText();if($("warn").textContent!==w)$("warn").textContent=w;
 }
 
-var lockA=false,lockN=false,lockP=false;
-function loop(){
- requestAnimationFrame(loop);
- if(raw.b==null)return;
- var P=polaris(),tgt=S.lat;
- var tilt=smo("t",tiltAim()),side=smo("r",rollOf()-S.zeroR);
- var dAlt=tilt-tgt;
- $("angNow").textContent=f1(tilt)+"°";$("angTgt").textContent=f1(tgt)+"°";
- if(!lockA&&Math.abs(dAlt)<=.5){lockA=true;tone(880,.25)}else if(lockA&&Math.abs(dAlt)>.7)lockA=false;
- $("angCmd").textContent=lockA?"✔ ANGLE LOCKED":dAlt<0?"▲ RAISE "+f1(-dAlt)+"°":"▼ LOWER "+f1(dAlt)+"°";
- $("angP").classList.toggle("locked",lockA);
- $("sideSm").textContent=Math.abs(side)<1?"Sides level":side>0?"◀ Right side high "+f1(side)+"°":"Left side high "+f1(-side)+"° ▶";
- gauge(tilt,tgt);
+// ---------- ZERO + MagSafe ----------
+function doZero(){if(raw.b==null)return false;S.zeroB=raw.b;S.zeroR=rollOf();resetSm();save();tone(520,.15);return true}
+var offRef=null;
+function mountTap(){ // returns "nocompass" | "step1" | "on" | "off"
+ var m=raw.mag;if(m==null)return"nocompass";
+ if(S.mounted&&offRef==null){S.mounted=false;save();look();return"off"}
+ if(offRef==null){offRef=m;look();return"step1"}
+ S.magOff=s180(m-offRef);S.mounted=true;offRef=null;resetSm();save();look();tone(660,.2);return"on";
+}
+$("mountBtn").onclick=function(){var r=mountTap(),M=$("mountMsg");
+ M.textContent=r==="nocompass"?"No compass reading yet.":r==="step1"?"Step 1 saved. Snap the phone onto the MagSafe mount, pointing the SAME way, then tap.":
+ r==="on"?"ON MOUNT. Magnet fix "+f1(S.magOff)+"°. Tap to take it off.":"OFF MOUNT: magnet fix paused. Tap to redo it."};
+$("noMagBtn").onclick=function(){S.noMag=!S.noMag;offRef=null;resetSm();save();look();
+ $("mountMsg").textContent=S.noMag?"No MagSafe: using the plain compass.":"MagSafe: phone OFF the mount, tap the big button, then snap it on and tap again."};
 
- var th=trueAim(),dN=null;
- if(th==null){
-  $("northCmd").textContent=got?"NO COMPASS":"WAIT…";$("northSm").textContent="Angle still works.";
-  $("polCmd").textContent="--";$("polSm").textContent="Polaris "+f1(P.alt)+"° up";
- }else{
-  var hx=smo("hx",Math.sin(th*D)),hy=smo("hy",Math.cos(th*D)),h=n360(Math.atan2(hx,hy)*R);
-  dN=s180(h); // + = aiming east of true north
-  if(!lockN&&Math.abs(dN)<=1.5){lockN=true;tone(660,.3)}else if(lockN&&Math.abs(dN)>2.5)lockN=false;
-  var wL=S.flipLR,goW="SWING WEST "+Math.round(Math.abs(dN))+"°",goE="SWING EAST "+Math.round(Math.abs(dN))+"°";
-  $("northCmd").textContent=lockN?"✔ ON NORTH":dN>0?(wL?"◀ "+goW:goW+" ▶"):(wL?goE+" ▶":"◀ "+goE);
-  $("northSm").textContent="Aiming "+Math.round(h)+"° true"+(S.mounted?" · MagSafe fix "+f1(S.magOff)+"°":"");
-  $("northP").classList.toggle("locked",lockN);
+// ---------- EASY MODE ----------
+var mode="start",ei=0,eTimer=0;
+var STEPS=[
+ {id:"loc",title:"Your target angle",
+  text:function(){return"GPS says your latitude is "+f1(S.lat)+"°. That is how far to tilt the scope up."},
+  speak:function(){return"Your target angle is "+f1(S.lat)+" degrees."},
+  act:"NEXT",onAct:function(){next()},
+  act2:"GET GPS AGAIN",onAct2:function(){getGPS(false,function(){enter(ei)})}},
+ {id:"mount",title:"What holds the phone?",text:"Is the phone on a MagSafe mount?",
+  speak:"Is the phone on a MagSafe mount?",
+  act:"YES, MAGSAFE",onAct:function(){S.noMag=false;save();look();next()},
+  act2:"NO MAGSAFE",onAct2:function(){S.noMag=true;S.mounted=false;offRef=null;save();look();next()}},
+ {id:"zero",title:"Level and zero",text:"Lay the phone flat on something level, screen up. Hold still, then tap ZERO.",
+  speak:"Lay the phone flat on something level. Hold still, then tap zero.",
+  act:"ZERO",onAct:function(){if(!rawStill()){$("eWarn").textContent="Hold still a moment, then tap again.";return}
+   if(doZero()){$("eWarn").textContent="";say("Zeroed",true);setTimeout(next,700)}}},
+ {id:"mag1",skip:function(){return S.noMag},title:"MagSafe: off the mount",
+  text:"Hold the phone in your hand, charging port pointing the same way as the scope. Then tap.",
+  speak:"Hold the phone in your hand, pointing the same way as the scope. Then tap.",
+  enter:function(){S.mounted=false;offRef=null;save();look()},
+  act:"PHONE IS OFF THE MOUNT",onAct:function(){var r=mountTap();if(r==="nocompass"){$("eWarn").textContent="No compass reading yet. Wait a moment and tap again.";return}next()}},
+ {id:"mag2",skip:function(){return S.noMag},title:"MagSafe: on the mount",
+  text:"Snap the phone onto the MagSafe mount, pointing the same way. Then tap.",
+  speak:"Snap the phone onto the mount, pointing the same way. Then tap.",
+  act:"PHONE IS ON THE MOUNT",onAct:function(){if(offRef==null){go(ei-1);return}
+   var r=mountTap();if(r==="on"){say("MagSafe fix saved",true);setTimeout(next,700)}}},
+ {id:"angle",title:"Set the angle",text:"Tilt the scope until the solid needle sits on the dashed line.",
+  speak:"Tilt the scope until the needle sits on the dashed line.",gauge:true},
+ {id:"aim",title:"Aim at Polaris",text:"Turn the mount until the + sits on Polaris in the middle.",
+  speak:"Turn the mount until the cross sits on Polaris.",target:true},
+ {id:"done",title:"",text:"",gauge:false,target:true,
+  act:"CHECK AGAIN",onAct:function(){go(5)},act2:"FULL SCREEN",onAct2:function(){toFull()}}
+];
+function visible(){return STEPS.filter(function(s){return!(s.skip&&s.skip())})}
+function enter(i){
+ ei=i;var s=STEPS[i],vis=visible(),n=vis.indexOf(s)+1;
+ $("eStep").textContent="STEP "+n+" OF "+vis.length;
+ if(s.enter)s.enter();
+ $("eTitle").textContent=s.title;$("eText").textContent=typeof s.text==="function"?s.text():s.text;
+ show("eGauge",!!s.gauge);show("eTarget",!!s.target);show("eNums",!!s.gauge||!!s.target);show("eCmd",!!s.gauge||!!s.target);
+ show("eAct",!!s.act);show("eAct2",!!s.act2);if(s.act)$("eAct").textContent=s.act;if(s.act2)$("eAct2").textContent=s.act2;
+ $("eWarn").textContent="";show("eBack",i>0);show("eSkip",s.id!=="done");
+ var sp=typeof s.speak==="function"?s.speak():s.speak;if(sp)say(sp,true);
+}
+function go(i){i=Math.max(0,Math.min(STEPS.length-1,i));enter(i)}
+function next(){var i=ei+1;while(i<STEPS.length&&STEPS[i].skip&&STEPS[i].skip())i++;go(i)}
+function back(){var i=ei-1;while(i>0&&STEPS[i].skip&&STEPS[i].skip())i--;go(i)}
+$("eAct").onclick=function(){STEPS[ei].onAct&&STEPS[ei].onAct()};
+$("eAct2").onclick=function(){STEPS[ei].onAct2&&STEPS[ei].onAct2()};
+$("eBack").onclick=back;$("eSkip").onclick=next;$("eExit").onclick=function(){toFull()};
+$("eVoice").onclick=function(){S.voice=!S.voice;save();look();if(!S.voice)try{speechSynthesis.cancel()}catch(e){}};
 
-  var dPz=s180(h-P.az),dPa=tilt-P.alt,off=Math.hypot(dPz,dPa);
-  if(!lockP&&Math.abs(dPz)<=1.5&&Math.abs(dPa)<=.5){lockP=true;tone(523,.3,true)}
-  else if(lockP&&(Math.abs(dPz)>2.5||Math.abs(dPa)>.7))lockP=false;
-  $("polCmd").textContent=lockP?"✔ ON POLARIS":f1(off)+"° OFF";
-  $("polSm").textContent="Polaris: "+f1(P.alt)+"° up, "+f1(Math.abs(s180(P.az)))+"° "+(s180(P.az)>=0?"E":"W")+" of N";
-  $("polP").classList.toggle("locked",lockP);
+function renderEasy(ST){
+ var s=STEPS[ei];
+ if(s.id==="angle"){
+  drawGauge($("eGauge"),ST.tilt,S.lat);
+  $("eNums").textContent="SCOPE "+f1(ST.tilt)+"°  ·  TARGET "+f1(S.lat)+"°";
+  $("eCmd").textContent=angleWords(ST);$("eCmd").classList.toggle("locked",ST.lockA);
+  $("eWarn").textContent=ST.lockA?"":sideText(ST.side)==="Sides level"?"":sideText(ST.side);
+  say(angleSpeak(ST));
+  if(ST.lockA&&ST.heldA>3000){say("Angle locked. Next, aim at Polaris.",true);next()}
+ }else if(s.id==="aim"){
+  drawTarget($("eTarget"),ST);
+  $("eNums").textContent=ST.lockN?"✔ also on true north":"";
+  $("eCmd").textContent=turnWords(ST.dH,ST.lockP,"✔ ON POLARIS");$("eCmd").classList.toggle("locked",ST.lockP);
+  $("eWarn").textContent=ST.lockA?"":"Angle moved: "+angleWords(ST);
+  say(turnSpeak(ST.dH,ST.lockP,"On Polaris"));
+  if(ST.lockP&&ST.heldP>3000)next();
+ }else if(s.id==="done"){
+  drawTarget($("eTarget"),ST);
+  var ok=ST.lockA&&ST.lockP;
+  $("eTitle").textContent=ok?"✔ ALIGNED":"Almost there";
+  $("eText").textContent=ok?"Polar aligned. Lock the mount and start your session.":"Something moved. Tap CHECK AGAIN.";
+  $("eNums").textContent=(ST.lockA?"✔ angle":"✘ angle")+"   "+(ST.lockP?"✔ Polaris":"✘ Polaris")+"   "+(ST.lockN?"✔ north":"· north");
+  $("eCmd").textContent=ok?"✔ ALIGNED":ST.lockA?turnWords(ST.dH,false,""):angleWords(ST);
+  $("eCmd").classList.toggle("locked",ok);
+  if(ok&&!s._said){s._said=true;say("Aligned. You are good to go.",true)}if(!ok)s._said=false;
+ }else if(s.id==="zero"){
+  $("eAct").textContent=rawStill()?"ZERO":"HOLD STILL…";
  }
- draw(dN,dAlt,P,lockA&&lockN);
- var w="";if(raw.acc!=null&&(raw.acc<0||raw.acc>20))w="Compass weak: wave the phone in a slow figure-8 away from metal.";
- if($("warn").textContent!==w)$("warn").textContent=w;
+ var w=warnText();if(w&&s.id!=="angle"&&s.id!=="aim")$("eWarn").textContent=w;
 }
 
-function begin(){
- window.addEventListener("deviceorientationabsolute",function(e){onOri(e,true)},true);
- window.addEventListener("deviceorientation",function(e){
-  if("ondeviceorientationabsolute" in window&&typeof e.webkitCompassHeading!=="number"){if(e.beta!=null){raw.b=e.beta;raw.g=e.gamma;got=true}return}
-  onOri(e,false)},true);
- $("start").classList.add("hidden");$("main").classList.remove("hidden");
- try{navigator.wakeLock&&navigator.wakeLock.request("screen").catch(function(){})}catch(e){}
- getGPS(true);requestAnimationFrame(loop);
- setTimeout(function(){if(!got)$("warn").textContent="No sensor data. Open this page on your phone in Chrome or Safari."},3000);
+// ---------- loop + screens ----------
+function loop(){requestAnimationFrame(loop);if(raw.b==null)return;var ST=compute();if(mode==="full")renderFull(ST);else if(mode==="easy")renderEasy(ST)}
+function setMode(m){mode=m;show("start",m==="start");show("main",m==="full");show("easy",m==="easy");
+ if(m!=="start"){S.lastMode=m;save()} if(m!=="easy")try{speechSynthesis.cancel()}catch(e){}}
+function toFull(){setMode("full");look()}
+var started=false;
+function begin(m){
+ if(!started){started=true;
+  window.addEventListener("deviceorientationabsolute",function(e){onOri(e,true)},true);
+  window.addEventListener("deviceorientation",function(e){
+   if("ondeviceorientationabsolute" in window&&typeof e.webkitCompassHeading!=="number"){if(e.beta!=null){raw.b=e.beta;raw.g=e.gamma;got=true}return}
+   onOri(e,false)},true);
+  try{navigator.wakeLock&&navigator.wakeLock.request("screen").catch(function(){})}catch(e){}
+  getGPS(true,function(){if(mode==="easy"&&STEPS[ei].id==="loc")enter(ei)});requestAnimationFrame(loop);
+  setTimeout(function(){if(!got){$("warn").textContent=$("eWarn").textContent="No sensor data. Open this page on your phone in Chrome or Safari."}},3000);
+ }
+ setMode(m);look();if(m==="easy")enter(0);
 }
-$("startBtn").onclick=function(){
- try{var A=window.AudioContext||window.webkitAudioContext;if(A){ac=new A();ac.resume&&ac.resume()}}catch(e){}
+function startTap(m){
+ try{var A=window.AudioContext||window.webkitAudioContext;if(A&&!ac){ac=new A()}ac&&ac.resume&&ac.resume()}catch(e){}
+ try{if(window.speechSynthesis){var u=new SpeechSynthesisUtterance(" ");u.volume=0;speechSynthesis.speak(u)}}catch(e){}
  if(window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==="function"){
-  DeviceOrientationEvent.requestPermission().then(function(r){r==="granted"?begin():$("startMsg").textContent="Motion access blocked. Allow Motion for this site, then reload."})
+  DeviceOrientationEvent.requestPermission().then(function(r){r==="granted"?begin(m):$("startMsg").textContent="Motion access blocked. Allow Motion for this site, then reload."})
   .catch(function(){$("startMsg").textContent="Couldn't ask for motion access. Reload and try again."});
- }else begin();
-};
+ }else begin(m);
+}
+$("easyBtn").onclick=function(){startTap("easy")};$("fullBtn").onclick=function(){startTap("full")};
+$("toEasy").onclick=function(){setMode("easy");look();enter(0)};
 document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")try{navigator.wakeLock&&navigator.wakeLock.request("screen").catch(function(){})}catch(e){}});
 
-function getGPS(quiet){
+// ---------- GPS ----------
+function getGPS(quiet,cb){
  if(!navigator.geolocation){if(!quiet)$("gpsMsg").textContent="No GPS here. Type it in.";return}
  if(!quiet)$("gpsMsg").textContent="Finding you…";
  navigator.geolocation.getCurrentPosition(function(p){
   S.lat=Math.round(p.coords.latitude*100)/100;S.lon=Math.round(p.coords.longitude*100)/100;save();
-  $("latIn").value=S.lat;$("lonIn").value=S.lon;$("gpsMsg").textContent="Set: "+S.lat+", "+S.lon;
+  $("latIn").value=S.lat;$("lonIn").value=S.lon;$("gpsMsg").textContent="Set: "+S.lat+", "+S.lon;cb&&cb();
  },function(){if(!quiet)$("gpsMsg").textContent="GPS blocked. Type it in."},{enableHighAccuracy:true,timeout:15000});
 }
 $("gpsBtn").onclick=function(){getGPS(false)};
 
-var offRef=null;
-$("mountBtn").onclick=function(){
- var m=raw.mag;
- if(m==null){$("mountMsg").textContent="No compass reading yet.";return}
- if(S.mounted){S.mounted=false;offRef=null;save();look();$("mountMsg").textContent="OFF MOUNT: magnet fix paused. Tap again to redo it.";return}
- if(offRef==null){
-  offRef=m;$("mountMsg").textContent="Step 1 saved. Snap the phone onto the MagSafe mount, aimed the SAME way, then tap.";
-  $("mountBtn").textContent="STEP 2: ON MOUNT? TAP";return;
- }
- S.magOff=s180(m-offRef);S.mounted=true;offRef=null;save();look();
- sm.hx=sm.hy=null;$("mountMsg").textContent="ON MOUNT. Magnet fix: "+f1(S.magOff)+"°. Tap the button to take it off.";tone(660,.2);
-};
-
-$("zeroBtn").onclick=function(){if(raw.b==null)return;S.zeroB=raw.b;S.zeroR=rollOf();sm.t=sm.r=null;save();tone(520,.15)};
-$("setBtn").onclick=function(){$("latIn").value=S.lat;$("lonIn").value=S.lon;$("decIn").value=S.dec;$("dimIn").value=S.dim;fillProfiles();$("settings").classList.remove("hidden")};
+// ---------- settings handlers ----------
+$("zeroBtn").onclick=doZero;
+$("setBtn").onclick=function(){$("latIn").value=S.lat;$("lonIn").value=S.lon;$("decIn").value=S.dec;$("dimIn").value=S.dim;fillProfiles();show("settings",true)};
 $("closeSet").onclick=function(){
  var a=parseFloat($("latIn").value),o=parseFloat($("lonIn").value),d=parseFloat($("decIn").value);
  if(!isNaN(a)&&Math.abs(a)<=90)S.lat=a;if(!isNaN(o)&&Math.abs(o)<=180)S.lon=o;if(!isNaN(d)&&Math.abs(d)<=40)S.dec=d;
- save();$("settings").classList.add("hidden")};
-$("polSetBtn").onclick=function(){
- var m=magAim();if(m==null){$("gpsMsg").textContent="No compass yet.";return}
- S.dec=Math.round(s180(polaris().az-m)*10)/10;$("decIn").value=S.dec;save();sm.hx=sm.hy=null;tone(660,.2)};
-$("tiltN").onclick=function(){S.flipTilt=false;sm.t=null;save();look()};$("tiltR").onclick=function(){S.flipTilt=true;sm.t=null;save();look()};
-$("lrW").onclick=function(){S.flipLR=true;save();look()};$("lrE").onclick=function(){S.flipLR=false;save();look()};
-$("aimPort").onclick=function(){S.aimPort=true;sm.t=sm.hx=sm.hy=null;save();look()};
-$("aimCam").onclick=function(){S.aimPort=false;sm.t=sm.hx=sm.hy=null;save();look()};
-$("thW").onclick=function(){S.theme="white";save();look()};$("thR").onclick=function(){S.theme="red";save();look()};
-$("sOn").onclick=function(){S.sound="on";save();look()};$("sOff").onclick=function(){S.sound="off";save();look()};
+ save();show("settings",false)};
+$("polSetBtn").onclick=function(){var m=magAim();if(m==null){$("gpsMsg").textContent="No compass yet.";return}
+ S.dec=Math.round(s180(polaris().az-m)*10)/10;$("decIn").value=S.dec;save();resetSm();tone(660,.2)};
+function set(id,fn){$(id).onclick=function(){fn();resetSm();save();look()}}
+set("useMag",function(){S.noMag=false});set("noMag",function(){S.noMag=true;S.mounted=false;offRef=null});
+set("aimPort",function(){S.aimPort=true});set("aimCam",function(){S.aimPort=false});
+set("tiltN",function(){S.flipTilt=false});set("tiltR",function(){S.flipTilt=true});
+set("lrW",function(){S.flipLR=true});set("lrE",function(){S.flipLR=false});
+set("thW",function(){S.theme="white"});set("thR",function(){S.theme="red"});
+set("sOn",function(){S.sound="on"});set("sOff",function(){S.sound="off"});
+set("vOn",function(){S.voice=true});set("vOff",function(){S.voice=false});
 $("dimIn").oninput=function(){S.dim=parseFloat(this.value);save();look()};
-$("clrZero").onclick=function(){S.zeroB=S.zeroR=0;sm.t=sm.r=null;save()};
-$("clrMag").onclick=function(){S.magOff=0;S.mounted=false;save();look()};
-
+set("clrZero",function(){S.zeroB=S.zeroR=0});set("clrMag",function(){S.magOff=0;S.mounted=false;offRef=null});
 function fillProfiles(){var s=$("profSel");s.innerHTML="";var ks=Object.keys(S.profiles);
  if(!ks.length){s.innerHTML="<option>(none saved)</option>";return}
  ks.forEach(function(k){var o=document.createElement("option");o.value=o.textContent=k;s.appendChild(o)})}
-$("profSave").onclick=function(){var n=($("profName").value||"").trim()||"Phone + mount";
- S.profiles[n]={zeroB:S.zeroB,zeroR:S.zeroR,magOff:S.magOff,dec:S.dec,aimPort:S.aimPort,flipTilt:S.flipTilt,flipLR:S.flipLR};save();fillProfiles();$("profSel").value=n};
+var PK=["zeroB","zeroR","magOff","dec","aimPort","flipTilt","flipLR","noMag"];
+$("profSave").onclick=function(){var n=($("profName").value||"").trim()||"Phone + mount",p={};PK.forEach(function(k){p[k]=S[k]});
+ S.profiles[n]=p;save();fillProfiles();$("profSel").value=n};
 $("profLoad").onclick=function(){var p=S.profiles[$("profSel").value];if(!p)return;
- S.zeroB=p.zeroB;S.zeroR=p.zeroR;S.magOff=p.magOff;S.dec=p.dec;if("aimPort" in p)S.aimPort=p.aimPort;if("flipTilt" in p)S.flipTilt=p.flipTilt;if("flipLR" in p)S.flipLR=p.flipLR;S.mounted=true;$("decIn").value=S.dec;
- sm.t=sm.r=sm.hx=sm.hy=null;save();look();tone(660,.2)};
+ PK.forEach(function(k){if(k in p)S[k]=p[k]});S.mounted=!S.noMag;$("decIn").value=S.dec;resetSm();save();look();tone(660,.2)};
 $("profDel").onclick=function(){delete S.profiles[$("profSel").value];save();fillProfiles()};
+
+look();
 })();
 </script>
 </body>
