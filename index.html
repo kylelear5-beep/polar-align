@@ -267,8 +267,8 @@ function loop(){
   $("northP").classList.toggle("locked",lockN);
 
   var dPz=s180(h-P.az),dPa=tilt-P.alt,off=Math.hypot(dPz,dPa);
-  if(!lockP&&Math.abs(dPz)<=2&&Math.abs(dPa)<=.5&&ST.head&&ST.tilt){lockP=true;tone(523,.3,true)}
-  else if(lockP&&(Math.abs(dPz)>3||Math.abs(dPa)>.7))lockP=false;
+  if(!lockP&&off<=2&&ST.head&&ST.tilt){lockP=true;tone(523,.3,true)}
+  else if(lockP&&off>3)lockP=false;
   $("polCmd").textContent=lockP?"✔ ON POLARIS (±2°)":f1(off)+"° OFF";
   $("polSm").textContent="Polaris: "+f1(P.alt)+"° up, "+f1(Math.abs(s180(P.az)))+"° "+(s180(P.az)>=0?"E":"W")+" of N";
   $("polP").classList.toggle("locked",lockP);
