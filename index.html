@@ -165,7 +165,7 @@ function polaris(){
 
 var raw={b:null,g:null,mag:null,acc:null},got=false;
 function onOri(e,abs){
- if(e.beta==null)return;got=true;raw.b=e.beta;raw.g=e.gamma;
+ if(e.beta==null)return;got=true;raw.b=e.beta;raw.g=e.gamma;setTimeout(pushHist,0);
  if(typeof e.webkitCompassHeading==="number"&&!isNaN(e.webkitCompassHeading)){
   raw.mag=e.webkitCompassHeading;raw.acc=e.webkitCompassAccuracy;
  }else if((abs||e.absolute===true)&&e.alpha!=null){
@@ -182,9 +182,10 @@ function trueAim(){var m=magAim();return m==null?null:n360(m+S.dec)}
 // how far the aiming end is raised above flat
 function tiltAim(){var b=raw.b-S.zeroB;return S.portNorth?b:-b} // port NORTH = v4's tested setup; SOUTH = mirror
 // hold steady: nothing locks or beeps until the readings stop jumping
-var hist=[];
-function steady(tilt,h){var now=performance.now();hist.push({t:now,a:tilt,h:h});while(hist.length&&now-hist[0].t>900)hist.shift();
- if(hist.length<8||now-hist[0].t<600)return{tilt:false,head:false};
+var hist=[]; // raw sensor samples, so "steady" does not depend on screen refresh
+function pushHist(){var now=performance.now();hist.push({t:now,a:raw.b,h:raw.mag});while(hist.length&&now-hist[0].t>900)hist.shift()}
+function steady(){var now=performance.now();
+ if(hist.length<5||now-hist[0].t<600)return{tilt:false,head:false};
  var amin=1e9,amax=-1e9,hmin=1e9,hmax=-1e9,ref=hist[0].h;
  hist.forEach(function(p){amin=Math.min(amin,p.a);amax=Math.max(amax,p.a);if(p.h!=null&&ref!=null){var d=s180(p.h-ref);hmin=Math.min(hmin,d);hmax=Math.max(hmax,d)}});
  return{tilt:amax-amin<.35,head:ref!=null&&hmax-hmin<1.2}}
@@ -245,7 +246,7 @@ function loop(){
  if(raw.b==null)return;
  var P=polaris(),tgt=S.lat;
  var tilt=smo("t",tiltAim()),side=smo("r",rollOf()-S.zeroR);
- var dAlt=tilt-tgt,ST=steady(tilt,trueAim());
+ var dAlt=tilt-tgt,ST=steady();
  $("angNow").textContent=f1(tilt)+"°";$("angTgt").textContent=f1(tgt)+"°";
  if(!lockA&&Math.abs(dAlt)<=.5&&ST.tilt){lockA=true;tone(880,.25)}else if(lockA&&Math.abs(dAlt)>.7)lockA=false;
  $("angCmd").textContent=lockA?"✔ ANGLE LOCKED (±0.5°)":dAlt<0?"▲ RAISE "+f1(-dAlt)+"°":"▼ LOWER "+f1(dAlt)+"°";
@@ -281,7 +282,7 @@ function loop(){
 function begin(){
  window.addEventListener("deviceorientationabsolute",function(e){onOri(e,true)},true);
  window.addEventListener("deviceorientation",function(e){
-  if("ondeviceorientationabsolute" in window&&typeof e.webkitCompassHeading!=="number"){if(e.beta!=null){raw.b=e.beta;raw.g=e.gamma;got=true}return}
+  if("ondeviceorientationabsolute" in window&&typeof e.webkitCompassHeading!=="number"){if(e.beta!=null){raw.b=e.beta;raw.g=e.gamma;setTimeout(pushHist,0);got=true}return}
   onOri(e,false)},true);
  $("start").classList.add("hidden");$("main").classList.remove("hidden");
  try{navigator.wakeLock&&navigator.wakeLock.request("screen").catch(function(){})}catch(e){}
