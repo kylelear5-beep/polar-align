@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#000000">
-<title>Polar Align v3</title>
+<title>Polar Align v4</title>
 <style>
 :root{--fg:#e6e6e6;--bg:#000;--dim:.8}
 body.red{--fg:#ff4a3a}
@@ -27,6 +27,8 @@ button:active,button.on{background:var(--fg);color:var(--bg)}
 #start h1{margin:0;font-size:32px}
 #start p{font-size:19px;line-height:1.5;margin:0;max-width:26em}
 #startBtn{font-size:30px;padding:22px 56px}
+#mountBtn{width:100%;font-size:clamp(22px,6.5vw,32px);padding:18px 8px;border-width:5px;border-style:dashed}
+#mountBtn.on{border-style:double;border-width:8px}
 #warn:not(:empty){border:3px dashed var(--fg);border-radius:12px;padding:8px;font-weight:bold;text-align:center}
 #settings{position:fixed;inset:0;background:var(--bg);overflow-y:auto;padding:16px;z-index:9;filter:brightness(var(--dim))}
 .f{border:2px solid var(--fg);border-radius:12px;padding:12px;margin-bottom:12px}
@@ -46,6 +48,8 @@ input[type=range]{width:100%;accent-color:var(--fg)}
  </div>
 
  <div id="main" class="hidden" style="display:flex;flex-direction:column;gap:8px">
+  <button id="mountBtn">MAGSAFE: OFF MOUNT</button>
+  <div id="mountMsg" class="sm" style="text-align:center">Phone OFF the mount: tap the button above. Then snap it on, aimed the same way, and tap again.</div>
   <canvas id="target" width="600" height="600"></canvas>
   <div class="row">
    <div id="northP" class="panel"><div class="lbl">NORTH</div><div id="northCmd" class="cmd">WAIT…</div><div id="northSm" class="sm">&nbsp;</div></div>
@@ -65,11 +69,9 @@ input[type=range]{width:100%;accent-color:var(--fg)}
   </div>
   <div id="warn"></div>
   <div class="row">
-   <button id="mountBtn">OFF MOUNT</button>
    <button id="zeroBtn">ZERO</button>
    <button id="setBtn">SETTINGS</button>
   </div>
-  <div id="mountMsg" class="sm" style="text-align:center"></div>
  </div>
 </div>
 
@@ -84,6 +86,13 @@ input[type=range]{width:100%;accent-color:var(--fg)}
  <div class="f"><div class="t">Which end of the phone aims?</div>
   <div class="row"><button id="aimPort">CHARGING PORT</button><button id="aimCam">CAMERA END</button></div>
   <div class="h">The end that points north, the same way as the scope.</div></div>
+
+ <div class="f"><div class="t">Directions</div>
+  <div class="h" style="margin-top:0">Angle needle</div>
+  <div class="row"><button id="tiltN">NORMAL</button><button id="tiltR">REVERSED</button></div>
+  <div class="h">Bullseye left / right</div>
+  <div class="row"><button id="lrW">WEST ON LEFT</button><button id="lrE">EAST ON LEFT</button></div>
+  <div class="h">If the needle or the scope marker moves the wrong way, flip it here.</div></div>
 
  <div class="f"><div class="t">True-north correction</div>
   <input id="decIn" type="number" step="0.1"> ° (negative = West)
@@ -120,7 +129,7 @@ function s180(a){a=n360(a);return a>180?a-360:a}
 function f1(v){return(Math.round(v*10)/10).toFixed(1)}
 function $(i){return document.getElementById(i)}
 
-var DEF={lat:41.70,lon:-73.92,dec:-13,magOff:0,zeroB:0,zeroR:0,mounted:false,aimPort:true,theme:"white",dim:.8,sound:"on",profiles:{}};
+var DEF={lat:41.70,lon:-73.92,dec:-13,magOff:0,zeroB:0,zeroR:0,mounted:false,aimPort:true,flipTilt:true,flipLR:true,theme:"white",dim:.8,sound:"on",profiles:{}};
 var S={};
 try{var sv=JSON.parse(localStorage.getItem("polarAlign2")||"{}")}catch(e){sv={}}
 for(var k in DEF)S[k]=(sv&&k in sv)?sv[k]:DEF[k];
@@ -131,7 +140,9 @@ function look(){
  $("thW").classList.toggle("on",S.theme==="white");$("thR").classList.toggle("on",S.theme==="red");
  $("sOn").classList.toggle("on",S.sound==="on");$("sOff").classList.toggle("on",S.sound!=="on");
  $("aimPort").classList.toggle("on",!!S.aimPort);$("aimCam").classList.toggle("on",!S.aimPort);
- $("mountBtn").textContent=S.mounted?"ON MOUNT":"OFF MOUNT";
+ $("mountBtn").textContent=S.mounted?"✔ MAGSAFE: ON MOUNT":"MAGSAFE: OFF MOUNT";
+ $("tiltN").classList.toggle("on",!S.flipTilt);$("tiltR").classList.toggle("on",!!S.flipTilt);
+ $("lrW").classList.toggle("on",!!S.flipLR);$("lrE").classList.toggle("on",!S.flipLR);
  $("mountBtn").classList.toggle("on",S.mounted);
 }
 look();
@@ -178,7 +189,7 @@ function magTop(){return raw.mag==null?null:n360(raw.mag-(S.mounted?S.magOff:0))
 function magAim(){var m=magTop();return m==null?null:n360(m+(S.aimPort?180:0))}
 function trueAim(){var m=magAim();return m==null?null:n360(m+S.dec)}
 // how far the aiming end is raised above flat
-function tiltAim(){var b=raw.b-S.zeroB;return S.aimPort?-b:b}
+function tiltAim(){var b=raw.b-S.zeroB,t=S.aimPort?-b:b;return S.flipTilt?-t:t}
 function rollOf(){return Math.asin(Math.max(-1,Math.min(1,-Math.cos(raw.b*D)*Math.sin(raw.g*D))))*R}
 
 var sm={t:null,r:null,hx:null,hy:null},K=.15;
@@ -198,14 +209,15 @@ function draw(dN,dUp,P,allOk){
  cx.lineWidth=1;cx.beginPath();cx.moveTo(C,0);cx.lineTo(C,W);cx.moveTo(0,C);cx.lineTo(W,C);cx.stroke();
  cx.font="bold 24px Verdana";cx.textAlign="center";
  cx.fillText("▲ HIGHER",C,28);cx.fillText("▼ LOWER",C,W-10);
- cx.textAlign="left";cx.fillText("◀ E",8,C-12);cx.textAlign="right";cx.fillText("W ▶",W-8,C-12);cx.textAlign="center";
+ var LR=S.flipLR?1:-1; // +1: west on the left, east on the right
+ cx.textAlign="left";cx.fillText(S.flipLR?"◀ W":"◀ E",8,C-12);cx.textAlign="right";cx.fillText(S.flipLR?"E ▶":"W ▶",W-8,C-12);cx.textAlign="center";
  // centre target = true north pole
  cx.lineWidth=4;cx.beginPath();cx.arc(C,C,10,0,7);cx.stroke();
  cx.font="bold 20px Verdana";cx.fillText("N",C+28,C+30);
  // Polaris, relative to the pole (east = left)
- if(P){var px=C-s180(P.az)*sc,py=C-(P.alt-S.lat)*sc;star(px,py,false);cx.fillText("Polaris",px,py-20)}
+ if(P){var px=C+LR*s180(P.az)*sc,py=C-(P.alt-S.lat)*sc;star(px,py,false);cx.fillText("Polaris",px,py-20)}
  if(dN==null)return;
- var x=C-dN*sc,y=C-dUp*sc,edge=false,dx=x-C,dy=y-C,dist=Math.hypot(dx,dy),max=C-24;
+ var x=C+LR*dN*sc,y=C-dUp*sc,edge=false,dx=x-C,dy=y-C,dist=Math.hypot(dx,dy),max=C-24;
  if(dist>max){x=C+dx/dist*max;y=C+dy/dist*max;edge=true}
  cx.lineWidth=5;cx.beginPath();cx.arc(x,y,allOk?30:20,0,7);cx.stroke();
  cx.beginPath();cx.moveTo(x-36,y);cx.lineTo(x+36,y);cx.moveTo(x,y-36);cx.lineTo(x,y+36);cx.stroke();
@@ -251,7 +263,8 @@ function loop(){
   var hx=smo("hx",Math.sin(th*D)),hy=smo("hy",Math.cos(th*D)),h=n360(Math.atan2(hx,hy)*R);
   dN=s180(h); // + = aiming east of true north
   if(!lockN&&Math.abs(dN)<=1.5){lockN=true;tone(660,.3)}else if(lockN&&Math.abs(dN)>2.5)lockN=false;
-  $("northCmd").textContent=lockN?"✔ ON NORTH":dN>0?"SWING WEST "+Math.round(dN)+"° ▶":"◀ SWING EAST "+Math.round(-dN)+"°";
+  var wL=S.flipLR,goW="SWING WEST "+Math.round(Math.abs(dN))+"°",goE="SWING EAST "+Math.round(Math.abs(dN))+"°";
+  $("northCmd").textContent=lockN?"✔ ON NORTH":dN>0?(wL?"◀ "+goW:goW+" ▶"):(wL?goE+" ▶":"◀ "+goE);
   $("northSm").textContent="Aiming "+Math.round(h)+"° true"+(S.mounted?" · MagSafe fix "+f1(S.magOff)+"°":"");
   $("northP").classList.toggle("locked",lockN);
 
@@ -300,13 +313,13 @@ var offRef=null;
 $("mountBtn").onclick=function(){
  var m=raw.mag;
  if(m==null){$("mountMsg").textContent="No compass reading yet.";return}
- if(S.mounted){S.mounted=false;offRef=null;save();look();$("mountMsg").textContent="Off mount: MagSafe fix paused.";return}
+ if(S.mounted){S.mounted=false;offRef=null;save();look();$("mountMsg").textContent="OFF MOUNT: magnet fix paused. Tap again to redo it.";return}
  if(offRef==null){
-  offRef=m;$("mountMsg").textContent="Off-mount reading saved. Snap onto the mount aimed the SAME way, then tap again.";
-  $("mountBtn").textContent="TAP WHEN ON";return;
+  offRef=m;$("mountMsg").textContent="Step 1 saved. Snap the phone onto the MagSafe mount, aimed the SAME way, then tap.";
+  $("mountBtn").textContent="STEP 2: ON MOUNT? TAP";return;
  }
  S.magOff=s180(m-offRef);S.mounted=true;offRef=null;save();look();
- sm.hx=sm.hy=null;$("mountMsg").textContent="On mount. Magnet fix: "+f1(S.magOff)+"°";tone(660,.2);
+ sm.hx=sm.hy=null;$("mountMsg").textContent="ON MOUNT. Magnet fix: "+f1(S.magOff)+"°. Tap the button to take it off.";tone(660,.2);
 };
 
 $("zeroBtn").onclick=function(){if(raw.b==null)return;S.zeroB=raw.b;S.zeroR=rollOf();sm.t=sm.r=null;save();tone(520,.15)};
@@ -318,6 +331,8 @@ $("closeSet").onclick=function(){
 $("polSetBtn").onclick=function(){
  var m=magAim();if(m==null){$("gpsMsg").textContent="No compass yet.";return}
  S.dec=Math.round(s180(polaris().az-m)*10)/10;$("decIn").value=S.dec;save();sm.hx=sm.hy=null;tone(660,.2)};
+$("tiltN").onclick=function(){S.flipTilt=false;sm.t=null;save();look()};$("tiltR").onclick=function(){S.flipTilt=true;sm.t=null;save();look()};
+$("lrW").onclick=function(){S.flipLR=true;save();look()};$("lrE").onclick=function(){S.flipLR=false;save();look()};
 $("aimPort").onclick=function(){S.aimPort=true;sm.t=sm.hx=sm.hy=null;save();look()};
 $("aimCam").onclick=function(){S.aimPort=false;sm.t=sm.hx=sm.hy=null;save();look()};
 $("thW").onclick=function(){S.theme="white";save();look()};$("thR").onclick=function(){S.theme="red";save();look()};
@@ -330,9 +345,9 @@ function fillProfiles(){var s=$("profSel");s.innerHTML="";var ks=Object.keys(S.p
  if(!ks.length){s.innerHTML="<option>(none saved)</option>";return}
  ks.forEach(function(k){var o=document.createElement("option");o.value=o.textContent=k;s.appendChild(o)})}
 $("profSave").onclick=function(){var n=($("profName").value||"").trim()||"Phone + mount";
- S.profiles[n]={zeroB:S.zeroB,zeroR:S.zeroR,magOff:S.magOff,dec:S.dec,aimPort:S.aimPort};save();fillProfiles();$("profSel").value=n};
+ S.profiles[n]={zeroB:S.zeroB,zeroR:S.zeroR,magOff:S.magOff,dec:S.dec,aimPort:S.aimPort,flipTilt:S.flipTilt,flipLR:S.flipLR};save();fillProfiles();$("profSel").value=n};
 $("profLoad").onclick=function(){var p=S.profiles[$("profSel").value];if(!p)return;
- S.zeroB=p.zeroB;S.zeroR=p.zeroR;S.magOff=p.magOff;S.dec=p.dec;if("aimPort" in p)S.aimPort=p.aimPort;S.mounted=true;$("decIn").value=S.dec;
+ S.zeroB=p.zeroB;S.zeroR=p.zeroR;S.magOff=p.magOff;S.dec=p.dec;if("aimPort" in p)S.aimPort=p.aimPort;if("flipTilt" in p)S.flipTilt=p.flipTilt;if("flipLR" in p)S.flipLR=p.flipLR;S.mounted=true;$("decIn").value=S.dec;
  sm.t=sm.r=sm.hx=sm.hy=null;save();look();tone(660,.2)};
 $("profDel").onclick=function(){delete S.profiles[$("profSel").value];save();fillProfiles()};
 })();
