@@ -4,7 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#000000">
-<title>Polar Align v8</title>
+<title>Polar Align</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <style>
 :root{--fg:#e6e6e6;--bg:#000;--dim:.8}
 body.red{--fg:#ff4a3a}
@@ -402,6 +407,8 @@ $("clrZero").onclick=function(){S.zeroB=S.zeroR=0;sm.t=sm.r=null;save()};
 $("clrMag").onclick=function(){S.magOff=0;S.magCurve=null;S.magDone=false;offRef=null;setup=0;save();look();magMsg("Tap SET UP MAGSAFE to do it again.")};
 
 })();
+// offline + installable
+if("serviceWorker" in navigator)window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});
 </script>
 </body>
 </html>
