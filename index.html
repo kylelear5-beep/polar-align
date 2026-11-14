@@ -216,7 +216,7 @@ function draw(dN,dUp,P,allOk){
 // ---- Inclination gauge: quarter circle 0-90°. Dashed line = target, solid line = scope.
 var gv=$("gauge"),gx=gv.getContext("2d");
 function gauge(tilt,tgt){
- var W=300,ox=30,oy=270,r=230,col=fgCol();
+ var W=300,ox=30,oy=270,r=230,col=getComputedStyle(gv).color||fgCol(); // follows the panel, so it stays visible when LOCKED
  gx.clearRect(0,0,W,W);gx.strokeStyle=col;gx.fillStyle=col;
  gx.lineWidth=3;gx.beginPath();gx.moveTo(ox,oy);gx.lineTo(ox+r,oy);gx.arc(ox,oy,r,0,-Math.PI/2,true);gx.closePath();gx.stroke();
  gx.font="bold 18px Verdana";gx.textAlign="center";
