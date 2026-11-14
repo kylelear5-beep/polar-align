@@ -208,7 +208,7 @@ function draw(dN,dUp,P,allOk){
  [1,3,6,12].forEach(function(r){cx.beginPath();cx.arc(C,C,r*sc,0,7);cx.stroke()});
  cx.lineWidth=1;cx.beginPath();cx.moveTo(C,0);cx.lineTo(C,W);cx.moveTo(0,C);cx.lineTo(W,C);cx.stroke();
  cx.font="bold 24px Verdana";cx.textAlign="center";
- cx.fillText("▲ HIGHER",C,28);cx.fillText("▼ LOWER",C,W-10);
+ cx.fillText("▲ NORTH",C,28);cx.fillText("▼ SOUTH",C,W-10);
  var LR=S.flipLR?1:-1; // +1: west on the left, east on the right
  cx.textAlign="left";cx.fillText(S.flipLR?"◀ W":"◀ E",8,C-12);cx.textAlign="right";cx.fillText(S.flipLR?"E ▶":"W ▶",W-8,C-12);cx.textAlign="center";
  // centre target = true north pole
